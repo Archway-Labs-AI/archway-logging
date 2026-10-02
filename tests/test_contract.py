@@ -158,3 +158,13 @@ def test_the_schema_requires_what_the_library_writes() -> None:
     from archway_logging.contract import CONTEXT_FIELDS, REQUIRED_FIELDS
     assert schema["required"] == list(REQUIRED_FIELDS)
     assert set(schema["properties"]) == {*REQUIRED_FIELDS, *CONTEXT_FIELDS, "attrs", "error"}
+
+
+def test_an_attribute_may_be_a_flat_map_of_scalars_but_nothing_deeper() -> None:
+    catalogue = Catalogue("plane-writer", [Event("http.request.served", "info", "One request.", "per-request",
+                                                 {"phases": Attr("internal")})])
+    with capture(catalogue) as out:
+        out.logger.event("http.request.served", phases={"lock.mutate.wait": 0.0, "identity.decide": 22.5,
+                                                        "deep": {"secret": "x"}})
+    phases = out.lines[0]["attrs"]["phases"]
+    assert phases["identity.decide"] == 22.5 and phases["deep"] == "{'secret': 'x'}", "deeper values are text"

@@ -15,11 +15,11 @@
 from .catalogue import Attr, Catalogue, CatalogueError, Event
 from .context import bound, current
 from .contract import CONTRACT_VERSION
-from .emit import EventLogger, UndeclaredEvent, error_object, event, get, setup
+from .emit import EventLogger, UndeclaredEvent, configured, error_object, event, get, setup
 from .redact import redact
 from .summary import FailureRun, Summary
 
 __all__ = [
     "Attr", "CONTRACT_VERSION", "Catalogue", "CatalogueError", "Event", "EventLogger", "FailureRun", "Summary",
-    "UndeclaredEvent", "bound", "current", "error_object", "event", "get", "redact", "setup",
+    "UndeclaredEvent", "bound", "configured", "current", "error_object", "event", "get", "redact", "setup",
 ]
