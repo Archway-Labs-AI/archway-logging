@@ -10,25 +10,11 @@ version. The machine-readable form of section 3 is `schema/log-line.v1.json`.
 
 ## Why
 
-Ben, 2026-10-01: enterprise services struggle "due to a complete lack of disciplined and consistent design to
-their logging"; the logging contract is the most important part of observability.
-
-What we have today (inventory, 2026-10-01, across the six service processes):
-
-- **Five incompatible line formats** (`access {json}` without a timestamp; `<ts> INFO {json}`; `<ts> node LEVEL
-  text`; `LEVEL text`; Rich columns plus uvicorn's format in the MCP), plus bare text from loggers nobody
-  configured. No shared setup anywhere.
-- **Errors swallowed:** the engine service logs nothing at all, including internal errors; identity drops 500s;
-  the router's identity retries are silent; the node reports activation, removal and fence events only to the
-  plane.
-- **Errors split:** multi-line tracebacks arrive as one journald entry per line, without the request they belong to.
-- **Secrets in logs:** OAuth codes in the plane's access path (fixed, #74) and in the MCP's uvicorn access log;
-  the node echoes up to 500 characters of the plane's error bodies.
-- **Uneven correlation:** request IDs only in the plane and identity access lines; none in the router, engine or
-  MCP, nor on the plane's own error and lock lines.
-- **Noise:** an access line per node long poll (every 10 s), a `poll failed` line about every second during an
-  outage, a startup banner printing business text (bet titles) and paths.
-
+Logs are only useful when every service writes them the same way. Without one design, each service grows its own
+line format, levels drift in meaning, failures are swallowed or split across lines, correlation stops at service
+boundaries, sensitive values slip in through request paths and error bodies, and high-frequency successes bury
+what matters. This contract fixes those once, for every Archway service: one line shape, declared events, levels
+with a meaning, errors as one object, nothing sensitive, and volume kept in proportion.
 
 ### 1. What logs are for, and what they are not
 
