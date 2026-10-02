@@ -32,11 +32,15 @@ def error_object(exc: BaseException) -> dict[str, str]:
             "stack": redact(stack, MAX_STACK_CHARS)}
 
 
-def _value(value: Any, limit: int) -> Any:
+def _value(value: Any, limit: int, *, nested: bool = False) -> Any:
+    """A value as written: scalars as they are; a list (up to 50 items) or a flat map of scalars (up to 32
+    keys, e.g. a request's phase timings) element by element; anything else as bounded, redacted text."""
     if value is None or isinstance(value, (bool, int, float)):
         return value
-    if isinstance(value, (list, tuple)):
-        return [_value(item, limit) for item in list(value)[:50]]
+    if isinstance(value, (list, tuple)) and not nested:
+        return [_value(item, limit, nested=True) for item in list(value)[:50]]
+    if isinstance(value, dict) and not nested:
+        return {redact(str(k), 64): _value(v, limit, nested=True) for k, v in list(value.items())[:32]}
     return redact(str(value), limit)
 
 
@@ -141,6 +145,12 @@ def setup(catalogue: Catalogue, *, release: str, stream: TextIO | None = None, l
     return logger
 
 
+def configured() -> EventLogger | None:
+    """The process's logger, or None where `setup` has not run (a test, a command-line tool): code shared by
+    services and tools emits through this and writes nothing where no service is running."""
+    return _CURRENT
+
+
 def get() -> EventLogger:
     """The process's logger; `setup` must have run."""
     if _CURRENT is None:
@@ -152,4 +162,4 @@ def event(name: str, msg: str | None = None, **kwargs: Any) -> None:
     get().event(name, msg, **kwargs)
 
 
-__all__ = ["EventLogger", "UndeclaredEvent", "error_object", "event", "get", "setup"]
+__all__ = ["EventLogger", "UndeclaredEvent", "configured", "error_object", "event", "get", "setup"]
