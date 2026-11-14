@@ -39,7 +39,7 @@ not a rewrite.
 | --- | --- | --- |
 | `ts` | yes | RFC 3339 UTC with milliseconds, set by the library |
 | `level` | yes | `debug` / `info` / `warn` / `error` (section 5) |
-| `service` | yes | `plane-writer`, `plane-front-door`, `identity`, `engine-router`, `engine`, `mcp`, `execution-node` |
+| `service` | yes | `plane-writer`, `plane-front-door`, `identity`, `engine-router`, `engine-dispatch`, `engine-serving`, `engine`, `mcp`, `execution-node` |
 | `release` | yes | the running release ID |
 | `event` | yes | a stable dotted name from the service's event catalogue (section 4) |
 | `msg` | yes | one human sentence, no variable secrets |
