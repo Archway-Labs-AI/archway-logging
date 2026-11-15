@@ -3,10 +3,14 @@ from __future__ import annotations
 
 import io
 import json
+import logging
 import re
+import sys
+import threading
 from contextlib import contextmanager
 from typing import Iterator
 
+from . import emit
 from .catalogue import Catalogue
 from .contract import CONTEXT_FIELDS, LEVELS, LINE_FIELDS, REQUIRED_FIELDS
 from .emit import EventLogger, setup
@@ -27,9 +31,25 @@ class Captured:
 
 @contextmanager
 def capture(catalogue: Catalogue, *, release: str = "test", level: str = "debug") -> Iterator[Captured]:
-    """Set the process up in strict mode, writing to a buffer, for a test."""
+    """Set the process up in strict mode, writing to a buffer, for the duration of the block.
+
+    `setup` changes process-wide state: the logger `configured()` returns, the root logger's handlers and
+    level, and the exception hooks. Leaving the block puts each back as it was, so one test's catalogue never
+    stays installed for whatever runs next in the same process."""
+    root = logging.getLogger()
+    saved = (emit._CURRENT, list(root.handlers), root.level, sys.excepthook, threading.excepthook)
     stream = io.StringIO()
-    yield Captured(stream, setup(catalogue, release=release, stream=stream, level=level, strict=True))
+    try:
+        yield Captured(stream, setup(catalogue, release=release, stream=stream, level=level, strict=True))
+    finally:
+        current, handlers, root_level, excepthook, thread_excepthook = saved
+        for handler in list(root.handlers):
+            root.removeHandler(handler)
+        for handler in handlers:
+            root.addHandler(handler)
+        root.setLevel(root_level)
+        sys.excepthook, threading.excepthook = excepthook, thread_excepthook
+        emit._CURRENT = current
 
 
 def violations(text: str, catalogue: Catalogue) -> list[str]:
