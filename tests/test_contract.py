@@ -168,3 +168,21 @@ def test_an_attribute_may_be_a_flat_map_of_scalars_but_nothing_deeper() -> None:
                                                         "deep": {"secret": "x"}})
     phases = out.lines[0]["attrs"]["phases"]
     assert phases["identity.decide"] == 22.5 and phases["deep"] == "{'secret': 'x'}", "deeper values are text"
+
+
+def test_capture_puts_the_process_back_as_it_was_when_the_block_ends() -> None:
+    """One test's capture never leaves its catalogue installed for whatever runs next in the process."""
+    import sys
+
+    from archway_logging import configured
+
+    other = Catalogue("other-service", [Event("other.thing", "info", "Something else.", "per-request")])
+    root = logging.getLogger()
+    before = (configured(), list(root.handlers), root.level, sys.excepthook, threading.excepthook)
+    with capture(CATALOGUE) as outer:
+        with capture(other) as inner:
+            assert configured() is inner.logger
+        assert configured() is outer.logger, "a nested capture puts the outer one back"
+        outer.logger.event("identity.recovered", failures=1)
+    assert (configured(), list(root.handlers), root.level, sys.excepthook, threading.excepthook) == before
+    assert [line["event"] for line in outer.lines] == ["identity.recovered"]
