@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Iterable, Mapping
 
-from .contract import ATTRIBUTE_NAME, CADENCES, CLASSIFICATIONS, CONTEXT_FIELDS, EVENT_NAME, LEVELS
+from .contract import ATTRIBUTE_NAME, CADENCES, CLASSIFICATIONS, CONTEXT_FIELDS, EVENT_NAME, EVENT_PARAMETERS, LEVELS
 from .contract import DEFAULT_MAX_ATTRIBUTE_CHARS
 
 
@@ -42,6 +42,9 @@ class Event:
         for attribute in self.attrs:
             if not ATTRIBUTE_NAME.fullmatch(attribute) or attribute in CONTEXT_FIELDS:
                 raise CatalogueError(f"event {self.name}: {attribute!r} is not a declarable attribute name")
+            if attribute in EVENT_PARAMETERS:
+                raise CatalogueError(f"event {self.name}: {attribute!r} is a parameter of EventLogger.event, so it "
+                                     "could never be written as an attribute; name it for what it holds")
 
 
 def _common() -> tuple[Event, ...]:

@@ -17,6 +17,9 @@ CONTEXT_FIELDS = (
     "requestId", "traceId", "spanId", "principal", "executionId", "leaseId", "member", "workstreamId",
 )
 LINE_FIELDS = (*REQUIRED_FIELDS, *CONTEXT_FIELDS, "attrs", "error")
+#: The parameters of `EventLogger.event(name, msg, *, error, level, **attrs)`: an attribute so named would be taken
+#: as the parameter, never written as an attribute (an `error` given text raises), so no catalogue may declare one.
+EVENT_PARAMETERS = ("name", "msg", "error", "level")
 
 #: Section 4: an attribute's sensitivity. `public`: safe anywhere; `internal`: operational detail (a route, a
 #: count, a duration); `identifier`: an opaque internal ID. Nothing else is loggable at all (section 7).
