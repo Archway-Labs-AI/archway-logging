@@ -134,6 +134,8 @@ def test_a_catalogue_that_breaks_the_contract_is_refused() -> None:
                 lambda: Event("a.b", "info", "", "per-request"),
                 lambda: Event("a.b", "info", "x", "sometimes"),
                 lambda: Event("a.b", "info", "x", "per-request", {"requestId": Attr("identifier")}),
+                *(lambda name=name: Event("a.b", "info", "x", "per-failure", {name: Attr("internal")})
+                  for name in ("name", "msg", "error", "level")),
                 lambda: Attr("secret")):
         with pytest.raises(CatalogueError):
             bad()
